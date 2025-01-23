@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--  ============================================一、tree、form============================================  -->
+
+    <!--   =====================意向客户=====================   -->
+    <!--   action_sale_lead.tree-->
+    <record id="view_sale_lead_tree" model="ir.ui.view">
+        <field name="name">yunkuaiji.sale.lead.tree</field>
+        <field name="model">yunkuaiji.sale.lead</field>
+        <field name="arch" type="xml">
+            <tree string="Sales Leads" decoration-danger="stage == 'lost'"
+                  decoration-success="stage =='signed_and_paid'">
+                <!--                decoration-danger：当字段 stage 为 lost 时，改行记录为红色-->
+                <!--                decoration-success：当字段 stage 为 signed_and_paid 时，改行记录为绿色-->
+                <field name="stage"/>
+                <field name="create_date" string="登记日期" widget="date"/>
+                <field name="partner_id"/>
+                <field name="establishment_date"/>
+                <field name="contact_name"/>
+                <field name="contact_phone"/>
+                <field name="is_kp"/>
+                <field name="company_type"/>
+                <field name="customer_type" widget="many2many_tags"/>
+                <field name="financial_status"/>
+                <field name="intent_assessment"/>
+                <field name="expected_revenue" sum="True"/>
+                <field name="expected_closing_cycle"/>
+                <field name="supervisor_evaluation"/>
+                <field name="closing_probability"/>
+                <field name="wechat_verified"/>
+                <field name="salesperson_id"/>
+                <field name="latest_contact_visit_time"/>
+                <field name="latest_contact_visit_content"/>
+                <field name="latest_contact_next_visit_time"/>
+                <field name="__last_update" string="更新日期" widget="date"/>
+            </tree>
+        </field>
+    </record>
+    <!--搜索和筛选-->
+    <record id="view_search_sale_lead" model="ir.ui.view">
+        <field name="name">yunkuaiji.sale.lead</field>
+        <field name="model">yunkuaiji.sale.lead</field>
+        <field name="arch" type="xml">
+            <search>
+                <!--搜索-->
+                <!--                    <field name="salesperson_id"/>-->
+                <!--                <field name="sales_team_id"/>-->
+
+                <!--筛选-->
+                <filter string="我的线索" name="salesperson_id" domain="[('salesperson_id', '=', uid)]"/>
+
+                <filter string="登记日期" name="today" date="create_date"/>
+                <filter string="预期结束" name="expected_end_date" date="expected_end_date"/>
+                <filter string="下次跟进时间" name="latest_contact_next_visit_time"
+                        date="latest_contact_next_visit_time"/>
+                <filter string="更新时间" name="__last_update" date="__last_update"/>
+
+                <filter string="签单收款" name="stage" domain="[('stage', '=', 'signed_and_paid')]"/>
+                <filter string="丢失" name="stage" domain="[('stage', '=', 'lost')]"/>
+
+                <filter string="小规模" name="company_type" domain="[('company_type','=', 'small_scale')]"/>
+                <filter string="一般人" name="company_type" domain="[('company_type','=', 'general_taxpayer')]"/>
+
+                <filter string="主管评价A" name="supervisor_evaluation" domain="[('supervisor_evaluation','=','A')]"/>
+                <filter string="主管评价B" name="supervisor_evaluation" domain="[('supervisor_evaluation','=','B')]"/>
+
+                <filter string="已加微信" name="wechat_verified" domain="[('wechat_verified','=',True)]"/>
+                <filter string="未加微信" name="wechat_verified" domain="[('wechat_verified','=',False)]"/>
+
+                <filter string="已归档" name="active" domain="[('active','=',False)]"/>
+                <!--                分组-->
+                <group>
+                    <filter string="阶段" name="stage" context="{'group_by':'stage'}"/>
+                    <filter string="销售/顾问" name="salesperson_id" context="{'group_by':'salesperson_id'}"/>
+                    <filter string="团队" name="sales_team_id" context="{'group_by':'sales_team_id'}"/>
+                    <filter string="公司类型" name="company_type" context="{'group_by':'company_type'}"/>
+                    <filter string="意向判断" name="intent_assessment" context="{'group_by':'intent_assessment'}"/>
+                    <filter string="主管评价" name="supervisor_evaluation"
+                            context="{'group_by':'supervisor_evaluation'}"/>
+                </group>
+
+            </search>
+        </field>
+    </record>
+    <!--    action_sale_lead.form-->
+    <record id="view_sale_lead_form" model="ir.ui.view">
+        <field name="name">yunkuaiji.sale.lead.form</field>
+        <field name="model">yunkuaiji.sale.lead</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="stage" widget="statusbar" options="{'clickable': True, 'fold_field': 'fold',}"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object"
+                                class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button"
+                                options='{"terminology": "archive"}'/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="opportunities" class="oe_edit_only"/>
+                        <h1>
+                            <field name="opportunities" placeholder="代账、注册、变更..."/>
+                        </h1>
+                        <h2 class="o_row row no-gutters d-flex">
+                            <div class="col">
+                                <label for="expected_revenue" class="oe_edit_only"/>
+                                <div class="o_row">
+                                    <!--                                <field name="company_currency" invisible="1"/>-->
+                                    <field name="expected_revenue" class="oe_inline" widget="monetary"
+                                           options="{'currency_field': 'expected_revenue'}"/>
+                                    <span class="oe_grey">在</span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="closing_probability" class="oe_edit_only"/>
+                                <div class="o_row d-flex">
+                                    <field name="closing_probability" widget="integer" class="oe_inline"/>
+                                    <span class="oe_grey">%</span>
+                                </div>
+                            </div>
+                        </h2>
+                    </div>
+                    <group>
+                        <group name="group_left">
+                            <!--                <field name="name"/> 字段名称修改-->
+                            <field name="partner_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="establishment_date"/>
+                            <field name="contact_name"/>
+                            <field name="contact_phone"/>
+                            <field name="is_kp"/>
+                            <!--                            空行-->
+                            <separator string=""/>
+                            <field name="company_type"/>
+                            <field name="source"/>
+                            <field name="customer_type" widget="many2many_tags"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="financial_status"/>
+                        </group>
+                        <group name="group_right">
+                            <field name="salesperson_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="sales_team_id" options="{'no_create': True, 'no_open': True}"/>
+                            <!--                            空行-->
+                            <separator string=""/>
+                            <field name="intent_assessment"/>
+                            <field name="expected_closing_cycle"/>
+                            <field name="expected_end_date"/>
+                            <field name="wechat_verified"/>
+
+                            <!--                            空行-->
+                            <separator string=""/>
+                            <field name="supervisor_evaluation"/>
+                            <field name="success_or_lost_cause"
+                               attrs="{'invisible': [('stage', 'not in', ['signed_and_paid', 'lost'])],
+                                       'required': [('stage', 'in', ['signed_and_paid', 'lost'])]}" />
+                            <field name="success_or_lost_cause_date" widget="date"
+                                   attrs="{'invisible': [('stage', 'not in', ['signed_and_paid', 'lost'])]}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="跟进记录">
+                            <field name="contact_ids">
+                                <tree editable="bottom">
+                                    <!-- 通过 editable="bottom" 使得在树视图中可以直接添加记录 -->
+                                    <field name="visit_time" widget="date" colspan="2" style="width: 120px;"/>
+                                    <field name="visit_content"/>
+                                    <field name="next_visit_time" widget="date" colspan="2" style="width: 120px;"/>
+                                </tree>
+                                <form>
+                                    <group>
+                                        <field name="visit_time" widget="date" colspan="2" style="width: 120px;"/>
+                                        <field name="visit_content"/>
+                                        <field name="next_visit_time" widget="date" colspan="2" style="width: 120px;"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="上传通话录音">
+                            <field name="annex_ids">
+                                <tree editable="bottom">
+                                    <!-- 通过 editable="bottom" 使得在树视图中可以直接添加记录 -->
+                                    <field name="upload_time" widget="date" colspan="1"/>
+                                    <field name="attachments" widget="many2many_binary"/>
+                                    <field name="remarks"/>
+                                </tree>
+                                <form>
+                                    <group>
+                                        <field name="upload_time" widget="date" colspan="1"/>
+                                        <field name="attachments" widget="many2many_binary"/>
+                                        <field name="remarks"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                    <div class="oe_chatter">
+                        <field name="message_ids" widget="mail_thread" options="{'post_refresh': 'recipients'}"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!--   =====================客户=====================   -->
+
+    <!--  ============================================二、action============================================  -->
+
+    <record id="action_sale_lead" model="ir.actions.act_window">
+        <field name="name">意向客户跟踪</field>
+        <field name="res_model">yunkuaiji.sale.lead</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_sale_customer" model="ir.actions.act_window">
+        <field name="name">所有客户</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <!--        默认筛选条件：-->
+        <!--        只显示所有联系人中的公司，（不包含客户-个人），不显示用户-->
+        <field name="domain">[('is_company', '=', True)]</field>
+        <!--        只显示客户（包含个人、公司），不显示用户-->
+        <!--        <field name="domain">[('customer', '=', True)]</field>-->
+    </record>
+
+    <!--  ============================================三、菜单============================================  -->
+    <!-- 主菜单 -->
+    <menuitem id="lead_management_menu" name="意向客户管理" sequence="10" action="action_sale_lead"/>
+
+    <!-- 子菜单 -->
+    <menuitem id="sale_customer_menu" name="客户" parent="lead_management_menu" sequence="1"/>
+    <menuitem id="sale_all_customer_menu" name="所有客户" parent="sale_customer_menu" action="action_sale_customer"/>
+
+    <menuitem id="sale_record_menu" name="意向客户" parent="lead_management_menu" sequence="1"/>
+    <menuitem id="sale_lead_menu" name="意向客户跟踪" parent="sale_record_menu" action="action_sale_lead"/>
+</odoo>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- 普通销售人员只能查看自己负责的销售线索 -->
+    <record id="module_sale_lead_category" model="ir.module.category">
+        <field name="name">意向客户模块权限</field>
+        <field name="description">意向客户模块权限设置</field>
+    </record>
+
+    <!--  ==================  分组  ==================  -->
+
+    <!-- 销售员组 -->
+    <record id="sale_lead_salesman" model="res.groups">
+        <field name="name">销售/顾问</field>
+        <field name="description">销售顾问权限组</field>
+        <!-- 意味着该权限组属于 “云会计人事模块权限” 这个分类。-->
+        <field name="category_id" ref="module_sale_lead_category"/>
+        <!-- 除了拥有该权限组自身定义的权限外，还继承有 base.group_user 权限组的权限。-->
+        <field name="implied_ids" eval="[(4,ref('base.group_user'))]"/>
+    </record>
+
+    <record id="sale_lead_supervisor" model="res.groups">
+        <field name="name">团队主管</field>
+        <field name="description">团队主管权限组</field>
+        <field name="category_id" ref="module_sale_lead_category"/>
+        <field name="implied_ids" eval="[(4,ref('yunkuaiji_crm.sale_lead_salesman'))]"/>
+    </record>
+
+    <record id="sale_lead_department_manager" model="res.groups">
+        <field name="name">部门经理</field>
+        <field name="description">部门经理权限组</field>
+        <field name="category_id" ref="module_sale_lead_category"/>
+        <field name="implied_ids" eval="[(4,ref('yunkuaiji_crm.sale_lead_supervisor')),(4,ref('yunkuaiji_crm.sale_lead_salesman'))]"/>
+    </record>
+
+    <record id="sale_lead_general_manager" model="res.groups">
+        <field name="name">总经理</field>
+        <field name="description">总经理权限组</field>
+        <field name="category_id" ref="module_sale_lead_category"/>
+        <field name="users" eval="[(4,ref('base.user_root')),(4,ref('base.user_admin'))]"/>
+    </record>
+
+    <record id="base.default_user" model="res.users">
+        <field name="groups_id" eval="[(4,ref('yunkuaiji_crm.sale_lead_salesman'))]"/>
+    </record>
+
+    <!--  ==================  记录级安全规则  ==================  -->
+    <!-- 销售员组 - 只允许查看自己的记录 -->
+    <record id="rule_salesperson_only_own" model="ir.rule">
+        <field name="name">销售员</field>
+        <field name="model_id" ref="model_yunkuaiji_sale_lead"/>
+        <field name="domain_force">[('salesperson_id', '=',user.id )]</field> <!-- 销售员只能查看自己的销售记录 -->
+        <field name="groups" eval="[(4, ref('sale_lead_salesman'))]"/> <!-- 销售员组 -->
+    </record>
+
+    <!-- 团队主管 - 只查看自己团队的记录 -->
+    <record id="rule_supervisor_only_team" model="ir.rule">
+        <field name="name">团队主管</field>
+        <field name="model_id" ref="model_yunkuaiji_sale_lead"/>
+        <field name="domain_force">
+            ['|',
+            ('salesperson_id', '=',user.id ),
+            ('sales_team_id.manager_id.user_id','=',user.id)]
+        </field> <!-- 主管只能查看自己团队的记录 -->
+        <field name="groups" eval="[(4, ref('yunkuaiji_crm.sale_lead_supervisor'))]"/> <!-- 主管组 -->
+    </record>
+    <!-- 部门经理 - 只查看自己部门的记录 -->
+    <record id="rule_department_manager_only_dept" model="ir.rule">
+        <field name="name">部门经理</field>
+        <field name="model_id" ref="model_yunkuaiji_sale_lead"/>
+        <field name="domain_force">
+            ['|',
+            ('salesperson_id', '=',user.id ),
+            ('sales_team_id.parent_id.manager_id.user_id','=',user.id)]
+        </field>
+        <field name="groups" eval="[(4, ref('yunkuaiji_crm.sale_lead_department_manager'))]"/> <!-- 部门经理组 -->
+    </record>
+
+    <!-- 总经理组，查看所有 - 只允许查看自己的记录 -->
+    <record id="rule_general_manager_all" model="ir.rule">
+        <field name="name">总经理</field>
+        <field name="model_id" ref="model_yunkuaiji_sale_lead"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+        <field name="groups" eval="[(4, ref('yunkuaiji_crm.sale_lead_general_manager'))]"/> <!-- 总经理组 -->
+    </record>
+
+</odoo>
+

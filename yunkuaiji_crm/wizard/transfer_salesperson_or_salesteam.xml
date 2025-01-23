@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="view_yunkuaiji_sale_transfers" model="ir.ui.view">
+        <field name="name">yunkuaiji.sales.transfers.view</field>
+        <field name="model">yunkuaiji.sales.transfers</field>
+        <field name="arch" type="xml">
+            <form string="批量转移">
+                <field name="lead_ids" options="{'no_create':True}">
+                    <tree string="Sales Leads" decoration-danger="stage == 'lost'"
+                          decoration-success="stage =='signed_and_paid'">
+                        <!--                decoration-danger：当字段 stage 为 lost 时，改行记录为红色-->
+                        <!--                decoration-success：当字段 stage 为 signed_and_paid 时，改行记录为绿色-->
+                        <field name="stage"/>
+                        <field name="create_date"/>
+                        <field name="partner_id"/>
+                        <field name="establishment_date"/>
+                        <field name="company_type"/>
+                        <field name="customer_type" widget="many2many_tags" />
+                        <field name="financial_status"/>
+                        <field name="intent_assessment"/>
+                        <field name="expected_revenue" sum="True"/>
+                        <field name="expected_closing_cycle"/>
+                        <field name="supervisor_evaluation"/>
+                        <field name="closing_probability"/>
+                        <field name="wechat_verified"/>
+                        <field name="__last_update" string="更新日期" widget="date"/>
+                    </tree>
+                </field>
+                <notebook>
+                    <page string="转移到">
+                        <group>
+                            <group>
+                                <field name="sales_team_id" options="{'no_open': True,'no_create':True}"/>
+                            </group>
+                            <group>
+                                <field name="salesperson_id" options="{'no_open': True,'no_create':True}"/>
+                            </group>
+                        </group>
+                    </page>
+                </notebook>
+                <footer>
+                    <button string="批量转移" name="update_sales_person_or_sales_team" type="object"
+                            class="oe_highlight"/>
+                    <button string="取消" class="oe_link" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+
+    <act_window
+            id="action_batch_transfer"
+            multi="True"
+            key2="client_action_multi"
+            name="意向客户批量转移"
+            res_model="yunkuaiji.sales.transfers"
+            src_model="yunkuaiji.sale.lead"
+            view_mode="form" target="new" view_type="form"
+            view_id="view_yunkuaiji_sale_transfers"
+    />
+
+</odoo>
